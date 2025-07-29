@@ -11,6 +11,7 @@ const Navbar = () => {
 
   const navItems = [
     { name: 'Features', href: '#features' },
+    { name: 'AI Generator', href: '/ai-generator' },
     { name: 'Components', href: '#components' },
     { name: 'Partnerships', href: '#partnerships' },
     { name: 'Dashboard', href: '/dashboard' },

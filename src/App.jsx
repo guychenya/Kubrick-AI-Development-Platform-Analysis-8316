@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import Navbar from './components/layout/Navbar';
 import Hero from './components/sections/Hero';
 import Features from './components/sections/Features';
+import AIShowcase from './components/sections/AIShowcase';
 import Dashboard from './components/sections/Dashboard';
 import ComponentLibrary from './components/sections/ComponentLibrary';
 import Partnerships from './components/sections/Partnerships';
 import Footer from './components/layout/Footer';
 import DashboardPage from './pages/DashboardPage';
+import AIGeneratorPage from './pages/AIGeneratorPage';
 
 function HomePage() {
   return (
@@ -21,6 +23,7 @@ function HomePage() {
       <Navbar />
       <Hero />
       <Features />
+      <AIShowcase />
       <Dashboard />
       <ComponentLibrary />
       <Partnerships />
@@ -35,6 +38,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/ai-generator" element={<AIGeneratorPage />} />
       </Routes>
     </Router>
   );
