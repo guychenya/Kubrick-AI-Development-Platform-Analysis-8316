@@ -6,7 +6,7 @@ import ComponentPreview from './ComponentPreview';
 import ollamaService from '../../services/ollamaService';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiZap, FiCode, FiEye, FiDownload, FiSettings, FiPlay, FiLoader, FiCheck, FiX, FiRefreshCw } = FiIcons;
+const { FiZap, FiCode, FiEye, FiDownload, FiSettings, FiPlay, FiLoader, FiCheck, FiX, FiRefreshCw, FiSliders } = FiIcons;
 
 const AICodeGenerator = () => {
   const [prompt, setPrompt] = useState('');
@@ -19,7 +19,18 @@ const AICodeGenerator = () => {
   const [error, setError] = useState('');
   const [generationHistory, setGenerationHistory] = useState([]);
   const [streamingText, setStreamingText] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [selectedTechnology, setSelectedTechnology] = useState('react');
+  const [temperature, setTemperature] = useState(0.7);
   const textareaRef = useRef(null);
+
+  const technologies = [
+    { id: 'react', name: 'React', icon: 'React' },
+    { id: 'vue', name: 'Vue', icon: 'Code' },
+    { id: 'svelte', name: 'Svelte', icon: 'Code' },
+    { id: 'angular', name: 'Angular', icon: 'Code' },
+    { id: 'html', name: 'HTML/CSS/JS', icon: 'Code' }
+  ];
 
   useEffect(() => {
     checkOllamaConnection();
@@ -60,7 +71,11 @@ const AICodeGenerator = () => {
           fullResponse += chunk;
           setStreamingText(fullResponse);
         },
-        { model: selectedModel }
+        { 
+          model: selectedModel,
+          technology: selectedTechnology,
+          temperature: temperature
+        }
       );
 
       const cleanCode = ollamaService.extractComponentCode(fullResponse);
@@ -71,6 +86,7 @@ const AICodeGenerator = () => {
         id: Date.now(),
         prompt: prompt.trim(),
         code: cleanCode,
+        technology: selectedTechnology,
         timestamp: new Date().toISOString(),
         model: selectedModel
       };
@@ -95,16 +111,26 @@ const AICodeGenerator = () => {
     setPrompt(historyItem.prompt);
     setGeneratedCode(historyItem.code);
     setSelectedModel(historyItem.model);
+    setSelectedTechnology(historyItem.technology || 'react');
   };
 
   const downloadCode = () => {
     if (!generatedCode) return;
     
+    const fileExtensions = {
+      'react': 'jsx',
+      'vue': 'vue',
+      'svelte': 'svelte',
+      'angular': 'ts',
+      'html': 'html'
+    };
+    
+    const extension = fileExtensions[selectedTechnology] || 'jsx';
     const blob = new Blob([generatedCode], { type: 'text/javascript' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'generated-component.jsx';
+    a.download = `generated-component.${extension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -128,7 +154,7 @@ const AICodeGenerator = () => {
           AI Component Generator
         </h1>
         <p className="text-xl text-gray-600 mb-6">
-          Generate React components using local AI models with Ollama
+          Generate components using local AI models with Ollama
         </p>
         
         {/* Connection Status */}
@@ -162,7 +188,70 @@ const AICodeGenerator = () => {
           >
             <SafeIcon icon={FiRefreshCw} className="h-4 w-4" />
           </button>
+
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`p-2 ${showSettings ? 'text-primary-600' : 'text-gray-500 hover:text-primary-600'} transition-colors`}
+          >
+            <SafeIcon icon={FiSettings} className="h-4 w-4" />
+          </button>
         </div>
+
+        {/* Technology Selection */}
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
+          {technologies.map((tech) => (
+            <button
+              key={tech.id}
+              onClick={() => setSelectedTechnology(tech.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                selectedTechnology === tech.id
+                  ? 'bg-primary-100 text-primary-700 ring-2 ring-primary-500 ring-opacity-50'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <SafeIcon name={tech.icon} className="h-4 w-4 mr-2 inline-block" />
+              {tech.name}
+            </button>
+          ))}
+        </div>
+        
+        {/* Advanced Settings */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-gray-50 rounded-xl p-6 mb-6 mx-auto max-w-2xl"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <SafeIcon icon={FiSliders} className="mr-2" />
+                Generation Settings
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Temperature</label>
+                  <div className="flex items-center space-x-4">
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="1.0"
+                      step="0.1"
+                      value={temperature}
+                      onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <span className="text-sm font-medium text-gray-700 w-10">{temperature}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Lower values produce more predictable outputs, higher values more creative ones
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -233,8 +322,13 @@ const AICodeGenerator = () => {
                     <div className="truncate text-gray-900 font-medium">
                       {item.prompt}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {new Date(item.timestamp).toLocaleDateString()}
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.timestamp).toLocaleDateString()}
+                      </span>
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                        {item.technology || 'react'}
+                      </span>
                     </div>
                   </button>
                 ))}
@@ -326,9 +420,15 @@ const AICodeGenerator = () => {
                     exit={{ opacity: 0 }}
                   >
                     {activeTab === 'code' ? (
-                      <CodePreview code={generatedCode} />
+                      <CodePreview 
+                        code={generatedCode} 
+                        language={ollamaService.getLanguageFromTechnology(selectedTechnology)}
+                      />
                     ) : (
-                      <ComponentPreview code={generatedCode} />
+                      <ComponentPreview 
+                        code={generatedCode}
+                        technology={selectedTechnology}
+                      />
                     )}
                   </motion.div>
                 ) : (

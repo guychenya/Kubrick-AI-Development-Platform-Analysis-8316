@@ -26,8 +26,13 @@ class OllamaService {
   }
 
   async generateComponent(prompt, options = {}) {
-    const systemPrompt = `You are an expert React developer and UI/UX designer. Generate a complete, functional React component based on the user's description. 
-
+    const technology = options.technology || 'react';
+    
+    let systemPrompt = `You are an expert frontend developer and UI/UX designer. Generate a complete, functional component based on the user's description using ${technology}.`;
+    
+    // Technology-specific instructions
+    if (technology === 'react') {
+      systemPrompt += `
 Requirements:
 - Use React with JSX syntax
 - Use Tailwind CSS for styling
@@ -37,9 +42,54 @@ Requirements:
 - Follow modern React best practices
 - Create visually appealing, professional designs
 - Use gradients, shadows, and modern UI patterns
-- Ensure components are production-ready
-
-Return ONLY the complete component code without any explanations or markdown formatting.`;
+- Ensure components are production-ready`;
+    } else if (technology === 'vue') {
+      systemPrompt += `
+Requirements:
+- Use Vue 3 with <script setup> syntax
+- Use Tailwind CSS for styling
+- Use vue-feather-icons for icons
+- Make components responsive and accessible
+- Follow Vue 3 composition API best practices
+- Create visually appealing, professional designs
+- Use gradients, shadows, and modern UI patterns
+- Ensure components are production-ready`;
+    } else if (technology === 'svelte') {
+      systemPrompt += `
+Requirements:
+- Use Svelte 3 syntax
+- Use Tailwind CSS for styling
+- Use svelte-feather-icons for icons
+- Make components responsive and accessible
+- Follow Svelte best practices with reactive declarations
+- Create visually appealing, professional designs
+- Use gradients, shadows, and modern UI patterns
+- Ensure components are production-ready`;
+    } else if (technology === 'angular') {
+      systemPrompt += `
+Requirements:
+- Use Angular 15+ with TypeScript
+- Use Tailwind CSS for styling
+- Use angular-feather for icons
+- Make components responsive and accessible
+- Follow Angular best practices with services and modules
+- Create visually appealing, professional designs
+- Use gradients, shadows, and modern UI patterns
+- Ensure components are production-ready`;
+    } else if (technology === 'html') {
+      systemPrompt += `
+Requirements:
+- Use modern HTML5, CSS3, and vanilla JavaScript
+- Use Tailwind CSS for styling
+- Use Feather icons (with CDN)
+- Make pages responsive and accessible
+- Follow modern web development best practices
+- Create visually appealing, professional designs
+- Use gradients, shadows, and modern UI patterns
+- Ensure code is production-ready`;
+    }
+    
+    systemPrompt += `\nReturn ONLY the complete component code without any explanations or markdown formatting.`;
 
     try {
       const response = await fetch(`${this.baseUrl}/api/generate`, {
@@ -72,12 +122,12 @@ Return ONLY the complete component code without any explanations or markdown for
   }
 
   async generateStyles(componentCode, styleRequirements) {
-    const prompt = `Given this React component code, enhance the styling based on these requirements: ${styleRequirements}
+    const prompt = `Given this component code, enhance the styling based on these requirements: ${styleRequirements}
 
 Component Code:
 ${componentCode}
 
-Return ONLY the updated component code with improved Tailwind CSS styling.`;
+Return ONLY the updated component code with improved styling.`;
 
     try {
       const response = await fetch(`${this.baseUrl}/api/generate`, {
@@ -105,16 +155,30 @@ Return ONLY the updated component code with improved Tailwind CSS styling.`;
   }
 
   extractComponentCode(response) {
-    // Extract React component code from AI response
-    const codeMatch = response.match(/```(?:jsx?|javascript|react)?\n?([\s\S]*?)```/);
+    // Extract code from AI response
+    const codeMatch = response.match(/```(?:jsx?|javascript|react|vue|svelte|ts|typescript|html|css)?\n?([\s\S]*?)```/);
     if (codeMatch) {
       return codeMatch[1].trim();
     }
 
-    // If no code blocks found, try to extract component directly
-    const componentMatch = response.match(/(?:import.*?from.*?;?\n)*(?:const|function)\s+\w+.*?(?:export\s+default\s+\w+;?)/s);
-    if (componentMatch) {
-      return componentMatch[0].trim();
+    // Try to extract component directly based on various technology patterns
+    const componentMatches = [
+      // React/JSX
+      response.match(/(?:import.*?from.*?;?\n)*(?:const|function)\s+\w+.*?(?:export\s+default\s+\w+;?)/s),
+      // Vue
+      response.match(/(?:<template>[\s\S]*<\/template>)[\s\S]*?(?:<script[\s\S]*?<\/script>)[\s\S]*?(?:<style[\s\S]*?<\/style>)?/s),
+      // Svelte
+      response.match(/(?:<script[\s\S]*?<\/script>)?[\s\S]*?(?:<style[\s\S]*?<\/style>)?/s),
+      // Angular - Fixed the regex pattern
+      response.match(/(?:import.*?from.*?;?\n)*(?:@Component\(\{[\s\S]*?\}\)[\s\S]*?export\s+class\s+\w+)/s),
+      // HTML
+      response.match(/(?:<!DOCTYPE html>)?[\s\S]*?<html[\s\S]*?<\/html>/s)
+    ];
+
+    for (const match of componentMatches) {
+      if (match) {
+        return match[0].trim();
+      }
     }
 
     // Return the full response if no specific pattern found
@@ -122,7 +186,24 @@ Return ONLY the updated component code with improved Tailwind CSS styling.`;
   }
 
   async streamGenerate(prompt, onChunk, options = {}) {
-    const systemPrompt = `You are an expert React developer. Generate a complete React component based on the description. Use React, Tailwind CSS, and react-icons/fi. Return only the component code.`;
+    const technology = options.technology || 'react';
+    
+    let systemPrompt = `You are an expert frontend developer. Generate a complete ${technology} component based on the description.`;
+    
+    // Add technology-specific context
+    if (technology === 'react') {
+      systemPrompt += ` Use React, Tailwind CSS, and react-icons/fi.`;
+    } else if (technology === 'vue') {
+      systemPrompt += ` Use Vue 3, Tailwind CSS, and vue-feather-icons.`;
+    } else if (technology === 'svelte') {
+      systemPrompt += ` Use Svelte, Tailwind CSS, and svelte-feather-icons.`;
+    } else if (technology === 'angular') {
+      systemPrompt += ` Use Angular, Tailwind CSS, and angular-feather.`;
+    } else if (technology === 'html') {
+      systemPrompt += ` Use HTML, CSS, vanilla JavaScript, and Feather icons CDN.`;
+    }
+    
+    systemPrompt += ` Return only the component code.`;
 
     try {
       const response = await fetch(`${this.baseUrl}/api/generate`, {
@@ -170,6 +251,17 @@ Return ONLY the updated component code with improved Tailwind CSS styling.`;
       console.error('Streaming generation failed:', error);
       throw error;
     }
+  }
+
+  getLanguageFromTechnology(technology) {
+    const mapping = {
+      'react': 'jsx',
+      'vue': 'vue',
+      'svelte': 'svelte',
+      'angular': 'typescript',
+      'html': 'html'
+    };
+    return mapping[technology] || 'jsx';
   }
 }
 

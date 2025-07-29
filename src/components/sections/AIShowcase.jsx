@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiZap, FiCode, FiBrain, FiLayers, FiArrowRight, FiCpu } = FiIcons;
+const { FiZap, FiCode, FiBrain, FiLayers, FiArrowRight, FiCpu, FiMonitor, FiGlobe } = FiIcons;
 
 const AIShowcase = () => {
   const aiFeatures = [
@@ -16,8 +16,8 @@ const AIShowcase = () => {
     },
     {
       icon: FiCode,
-      title: 'Intelligent Code Generation',
-      description: 'Generate production-ready React components from natural language',
+      title: 'Multi-Framework Support',
+      description: 'Generate components for React, Vue, Svelte, Angular, and vanilla HTML/CSS/JS',
       color: 'from-blue-500 to-cyan-500'
     },
     {
@@ -27,9 +27,9 @@ const AIShowcase = () => {
       color: 'from-green-500 to-emerald-500'
     },
     {
-      icon: FiCpu,
-      title: 'Real-time Processing',
-      description: 'Stream responses and see your components come to life instantly',
+      icon: FiMonitor,
+      title: 'Live Preview',
+      description: 'Instantly view and interact with generated components',
       color: 'from-orange-500 to-red-500'
     }
   ];
@@ -38,18 +38,29 @@ const AIShowcase = () => {
     {
       prompt: "Create a modern pricing card with gradient background",
       preview: "PricingCard.jsx",
-      lines: 45
+      lines: 45,
+      technology: "React"
     },
     {
       prompt: "Build a responsive navigation with smooth animations",
-      preview: "Navigation.jsx", 
-      lines: 62
+      preview: "Navbar.vue", 
+      lines: 62,
+      technology: "Vue"
     },
     {
       prompt: "Design a dashboard widget with live metrics",
-      preview: "MetricsWidget.jsx",
-      lines: 38
+      preview: "MetricsWidget.svelte",
+      lines: 38,
+      technology: "Svelte"
     }
+  ];
+
+  const techLogos = [
+    { name: 'React', icon: FiCode },
+    { name: 'Vue', icon: FiCode },
+    { name: 'Svelte', icon: FiCode },
+    { name: 'Angular', icon: FiCode },
+    { name: 'HTML/CSS/JS', icon: FiGlobe }
   ];
 
   return (
@@ -76,8 +87,20 @@ const AIShowcase = () => {
           
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Harness the power of local AI models through Ollama integration. Create beautiful, 
-            functional React components using natural language descriptions.
+            functional components for multiple frontend frameworks using natural language descriptions.
           </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+            {techLogos.map((tech, index) => (
+              <div 
+                key={index} 
+                className="flex items-center bg-white px-4 py-2 rounded-lg shadow-sm"
+              >
+                <SafeIcon icon={tech.icon} className="h-4 w-4 mr-2 text-purple-600" />
+                <span className="text-sm font-medium">{tech.name}</span>
+              </div>
+            ))}
+          </div>
 
           <Link to="/ai-generator">
             <motion.button
@@ -148,6 +171,11 @@ const AIShowcase = () => {
                     <div className="h-2 bg-blue-400 rounded w-1/2 mb-1"></div>
                     <div className="h-2 bg-yellow-400 rounded w-5/6"></div>
                   </div>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                    {example.technology}
+                  </span>
                 </div>
                 <p className="text-sm text-gray-700 italic">
                   "{example.prompt}"

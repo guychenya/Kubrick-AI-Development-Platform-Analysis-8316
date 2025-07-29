@@ -1,12 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import SafeIcon from '../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-markup';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-scss';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
+import 'prismjs/themes/prism-tomorrow.css';
 
 const { FiCopy, FiCheck } = FiIcons;
 
-const CodePreview = ({ code }) => {
+const CodePreview = ({ code, language = 'jsx' }) => {
   const [copied, setCopied] = useState(false);
+  const [highlightedCode, setHighlightedCode] = useState('');
+
+  useEffect(() => {
+    // Map the language to Prism's supported language
+    const prismLanguageMap = {
+      'jsx': 'jsx',
+      'vue': 'markup',
+      'svelte': 'markup',
+      'typescript': 'typescript',
+      'html': 'markup',
+      'css': 'css',
+      'js': 'javascript'
+    };
+    
+    const prismLanguage = prismLanguageMap[language] || 'jsx';
+    
+    // Highlight the code
+    const highlighted = Prism.highlight(
+      code,
+      Prism.languages[prismLanguage],
+      prismLanguage
+    );
+    
+    setHighlightedCode(highlighted);
+  }, [code, language]);
 
   const copyToClipboard = async () => {
     try {
@@ -18,21 +53,16 @@ const CodePreview = ({ code }) => {
     }
   };
 
-  const highlightSyntax = (code) => {
-    // Simple syntax highlighting for JSX/JavaScript
-    return code
-      .replace(/(import|export|from|const|let|var|function|return|if|else|for|while|class|extends|default)/g, '<span class="text-purple-600 font-semibold">$1</span>')
-      .replace(/('.*?'|".*?")/g, '<span class="text-green-600">$1</span>')
-      .replace(/(\{.*?\})/g, '<span class="text-blue-600">$1</span>')
-      .replace(/(<\/?[a-zA-Z][^>]*>)/g, '<span class="text-red-600">$1</span>')
-      .replace(/(\/\/.*$|\/\*[\s\S]*?\*\/)/gm, '<span class="text-gray-500 italic">$1</span>');
-  };
-
   return (
     <div className="relative">
       {/* Header */}
       <div className="flex items-center justify-between bg-gray-50 px-4 py-3 border-b border-gray-200">
-        <span className="text-sm font-medium text-gray-700">Generated Component</span>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700">Generated Component</span>
+          <span className="px-2 py-1 bg-gray-200 text-xs font-mono rounded text-gray-700">
+            {language}
+          </span>
+        </div>
         <motion.button
           onClick={copyToClipboard}
           whileHover={{ scale: 1.05 }}
@@ -49,12 +79,11 @@ const CodePreview = ({ code }) => {
       </div>
 
       {/* Code Content */}
-      <div className="bg-gray-900 text-gray-100 p-6 overflow-x-auto max-h-96">
+      <div className="bg-gray-900 text-gray-100 p-6 overflow-x-auto max-h-[calc(100vh-300px)]">
         <pre className="text-sm">
           <code 
-            dangerouslySetInnerHTML={{ 
-              __html: highlightSyntax(code) 
-            }} 
+            className={`language-${language}`}
+            dangerouslySetInnerHTML={{ __html: highlightedCode }} 
           />
         </pre>
       </div>
@@ -73,6 +102,7 @@ const CodePreview = ({ code }) => {
         pre code {
           margin-left: 3rem;
           display: block;
+          font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
         }
       `}</style>
     </div>
